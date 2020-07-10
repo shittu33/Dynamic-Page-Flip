@@ -1,0 +1,3 @@
+rootProject.name='Adaptable Curl Page'
+include ':PageCurl', ':adaptablecurlpage'
+include ':sample'
