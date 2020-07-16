@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.adaptablecurlpage.flipping;
+package com.example.adaptablecurlpage.flipping.utils;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -21,6 +21,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.util.Log;
+
+import com.example.adaptablecurlpage.flipping.render.PageRender;
 
 import java.util.LinkedList;
 import java.util.Random;

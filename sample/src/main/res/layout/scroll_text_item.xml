@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    >
+    <!--    android:fillViewport="true"-->
+
+    <com.example.sample.view.LinedEditText
+        android:id="@+id/tV"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:fontFamily="sans-serif-condensed-light"
+        tools:text="In the land of the blind"
+        android:textSize="33sp"
+        app:line_color="@color/colorPrimary"/>
+</ScrollView>

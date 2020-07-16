@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.adaptablecurlpage.flipping;
+package com.example.adaptablecurlpage.flipping.render;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -26,6 +26,7 @@ import android.os.Message;
 import com.eschao.android.widget.pageflip.Page;
 import com.eschao.android.widget.pageflip.PageFlip;
 import com.eschao.android.widget.pageflip.PageFlipState;
+import com.example.adaptablecurlpage.flipping.utils.LoadBitmapTask;
 
 /**
  * Double pages render

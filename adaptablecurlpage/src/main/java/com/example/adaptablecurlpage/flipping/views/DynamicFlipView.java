@@ -1,28 +1,49 @@
-package com.example.adaptablecurlpage.flipping;
+package com.example.adaptablecurlpage.flipping.views;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.os.Build;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.InputDevice;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.widget.AbsListView;
 import android.widget.Adapter;
 import android.widget.AdapterView;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.LayoutRes;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.eschao.android.widget.pageflip.Page;
 import com.eschao.android.widget.pageflip.PageFlip;
+import com.example.adaptablecurlpage.flipping.adapter.MultiAdapter;
+import com.example.adaptablecurlpage.flipping.adapter.SingleAdapter;
+import com.example.adaptablecurlpage.flipping.utils.BitmapLoader;
+import com.example.adaptablecurlpage.flipping.model.FlipItem;
+import com.example.adaptablecurlpage.flipping.enums.FlipSpeed;
+import com.example.adaptablecurlpage.flipping.render.PageRender;
+import com.example.adaptablecurlpage.flipping.enums.PageShadowType;
+import com.example.adaptablecurlpage.flipping.enums.PageType;
 import com.example.adaptablecurlpage.flipping.utils.DrawingState;
 import com.example.adaptablecurlpage.flipping.utils.View_Utils;
 
 import java.util.LinkedList;
+import java.util.List;
+
+import kotlin.Pair;
+import kotlin.jvm.functions.Function4;
 
 /**
  * Created by Abu Muhsin on 21/11/2018.
@@ -45,7 +66,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     private Adapter adapter;
     private DataSetObserver adapterDataObserver;
     private LinkedList<View> bufferedViews = new LinkedList<>();
-    private LinkedList<View> releasedViews = new LinkedList<>();
+    public LinkedList<View> releasedViews = new LinkedList<>();
     private int bufferIndex = -1;
     public int adapterIndex = -1;
     private int adapterDataCount = 0;
@@ -54,6 +75,13 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     private float last_position;
     public OnPageFlippedListener onPageFlippedListener;
     private DrawingState mDrawingState;
+    private Handler mHandler = new Handler();
+    private Runnable showAnimRunnable = new Runnable() {
+        @Override
+        public void run() {
+            mPageFlipView.showAnimation();
+        }
+    };
     //----------------------------Constructors----------------------------------------------------
 
     public DynamicFlipView(Context context, AttributeSet attrs) {
@@ -99,57 +127,50 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         } else {
             Log.i(TAG, "No data was supplied!!!");
         }
-//        MakeAdapterVisible();
+    }
+
+    public <T> void loadSingleLayoutPages(@LayoutRes final int layoutResources, LinkedList<T> data, final HandleSingleViewCallback<T> listener) {
+        final SingleAdapter<T> adapter = new SingleAdapter<>(data, new Function4<SingleAdapter<T>, Integer, View, ViewGroup, View>() {
+            @Override
+            public View invoke(SingleAdapter<T> adapter, Integer position, View convertView, ViewGroup parent) {
+                View v = convertView;
+                if (v == null)
+                    v = LayoutInflater.from(parent.getContext()).inflate(layoutResources, parent, false);
+                listener.HandleView(v, position, adapter.getItem(position));
+                return v;
+            }
+        });
+        setAdapter(adapter);
+    }
+
+    public <T> void loadMultiLayoutPages(List<Pair<Integer, T>> data, final HandleMultiViewCallback<T> listener) {
+        final MultiAdapter<T> adapter =
+                new MultiAdapter<T>(data, new Function4<MultiAdapter<T>, Integer, View, ViewGroup, View>() {
+                    @Override
+                    public View invoke(MultiAdapter<T> thisAdapter, Integer position, View convertView, ViewGroup parent) {
+                        View v = convertView;
+                        final int layout = thisAdapter.getItemViewType(position);
+                        if (v == null)
+                            v = LayoutInflater.from(parent.getContext()).inflate(layout, parent, false);
+                        listener.HandleView(v, position, thisAdapter.getItem(position), layout);
+                        return v;
+                    }
+                });
+        setAdapter(adapter);
+    }
+
+    public interface HandleSingleViewCallback<T> {
+        void HandleView(View v, @LayoutRes int position, T data);
+    }
+
+    public interface HandleMultiViewCallback<T> {
+        void HandleView(View v, int position, T data, int layout);
     }
 
     public boolean is_selected_view = false;
 
-    public void set_flexible_Selection(int position) {
-        if (adapter == null) {
-            return;
-        }
-        Log.i(TAG, "start selection at" + position);
-        adapterDataCount = adapter.getCount();
-        Log.i(TAG, "adapter count is " + adapterDataCount);
-        PageRender.setMaxPages(adapterDataCount);
-        Log.i(TAG, "Render has set the max pages");
-
-        releaseViews();
-        //add the requested view
-        Log.i(TAG, "Views were released");
-        View selectedView = viewFromAdapter(position, true);
-        Log.i(TAG, "Position of the selected view is " + position);
-        bufferedViews.add(selectedView);
-        Log.i(TAG, "selected view added");
-//        onPageFlippedListener.onPageFlipped(selectedView, position, selectedView.getId());
-        Log.i(TAG, "after FlipListener");
-        for (int i = 1; i <= sideBufferSize; i++) {
-            int next = position + i;
-            if (next < adapterDataCount) {
-                is_selected_view = true;
-                bufferedViews.addLast(viewFromAdapter(next, true));
-                Log.i(TAG, "next added");
-            }
-        }
-        Log.i(TAG, "buffer loaded");
-        //set positions to the requested position
-        bufferIndex = bufferedViews.indexOf(selectedView);
-        adapterIndex = position;
-        mPageFlipView.resetPageNo(position);
-        Log.i(TAG, "page reset");
-        updateVisibleView(bufferIndex);
-        listenForPageFlip();
-    }
-
     public void setAdapterDataCount(int adapterDataCount) {
         this.adapterDataCount = adapterDataCount;
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-//        RefreshFlip();
-        Log.i(TAG, "AdapterFlipView onDraw is called");
     }
 
     @Override
@@ -170,12 +191,10 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         for (int i = 1; i <= sideBufferSize; i++) {
             int previous = position - i;
             int next = position + i;
-
             if (previous >= 0) {
                 bufferedViews.addFirst(viewFromAdapter(previous, false));
                 Log.i(TAG, "previous added");
             }
-
             selectedView = viewFromAdapter(position, true);
             Log.i(TAG, "Position of the selected view is " + position);
             bufferedViews.add(selectedView);
@@ -210,7 +229,20 @@ public class DynamicFlipView extends AdapterView<Adapter> {
 
     @Override
     public View getSelectedView() {
-        return (bufferIndex < bufferedViews.size() && bufferIndex >= 0) ? bufferedViews.get(bufferIndex)
+        final int bufferSize = bufferedViews.size();
+        return (bufferSize > 0 && bufferIndex < bufferSize && bufferIndex >= 0) ? bufferedViews.get(bufferIndex)
+                : null;
+    }
+    public View getNextView() {
+        final int bufferSize = bufferedViews.size();
+        final int nextIndex = bufferIndex + 1;
+        return (nextIndex < bufferSize) ? bufferedViews.get(nextIndex)
+                : null;
+    }
+    public View getPreviousView() {
+        final int bufferSize = bufferedViews.size();
+        final int prevIndex = bufferIndex - 1;
+        return (prevIndex < bufferSize && prevIndex >= 0) ? bufferedViews.get(prevIndex)
                 : null;
     }
 
@@ -218,13 +250,6 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         return adapterDataCount;
     }
 
-
-    public enum FlipSpeed {
-        VERY_FAST,
-        FAST,
-        SLOW,
-        NORMAL
-    }
 
     public void ResetFlipSpeed() {
         getmPageFlipView().setFlipDuration(1500);
@@ -235,8 +260,16 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         setFlipBackwardDuration(1000);
     }
 
-    public void setFlipSpeed(FlipSpeed flipSpeed) {
+    public DynamicFlipView setFlipSpeed(FlipSpeed flipSpeed) {
         switch (flipSpeed) {
+            case VERY_SLOW:
+                this.getmPageFlipView().setFlipDuration(4000);
+                this.setInfiniteFlipForwardDuration(1300);
+                this.setInfiniteFlipForwardinterval(900);
+                this.setInfiniteFlipBackwardDuration(900);
+                this.setInfiniteFlipBackwardinterval(820);
+                this.setFlipBackwardDuration(2500);
+                break;
             case SLOW:
                 this.getmPageFlipView().setFlipDuration(2000);
                 this.setInfiniteFlipForwardDuration(900);
@@ -271,7 +304,46 @@ public class DynamicFlipView extends AdapterView<Adapter> {
                 this.setFlipBackwardDuration(230);
                 break;
         }
+        return this;
+    }
 
+    public DynamicFlipView setPageShadowType(PageShadowType pageShadowType) {
+        switch (pageShadowType) {
+            case NO_SHADOW:
+                mPageFlipView.mPageFlip.setShadowWidthOfFoldEdges(0, 10, 0.1f)
+                        .setShadowWidthOfFoldBase(0, 10, 0.1f);
+//                        .setShadowColorOfFoldEdges(0.1f, 0.4f, 0.3f, 0.0f);
+//                .setShadowColorOfFoldBase(0.1f,0.3f,0.1f,0.1f);
+                break;
+            case NORMAL_SHADOW:
+                mPageFlipView.mPageFlip.setShadowWidthOfFoldEdges(5, 50, 0.21f)
+                        .setShadowWidthOfFoldBase(5, 70, 0.22f)
+                        .setShadowColorOfFoldEdges(0.1f, 0.4f, 0.3f, 0.0f);
+//                .setShadowColorOfFoldBase(0.1f,0.3f,0.1f,0.1f);
+                break;
+            case DEEP_SHADOW:
+                mPageFlipView.mPageFlip.setShadowWidthOfFoldEdges(5, 60, 0.23f)
+                        .setShadowWidthOfFoldBase(5, 80, 0.4f)
+                        .setShadowColorOfFoldEdges(0.1f, 0.8f, 0.3f, 0.0f);
+//                .setShadowColorOfFoldBase(0.1f,0.3f,0.1f,0.1f);
+                break;
+
+        }
+        return this;
+    }
+
+    public DynamicFlipView setPageType(PageType pageType) {
+        switch (pageType) {
+            case SOFT_SHEET:
+                mPageFlipView.mPageFlip.setSemiPerimeterRatio(0.3f);
+                break;
+            case MAGAZINE_SHEET:
+                mPageFlipView.mPageFlip.setSemiPerimeterRatio(0.65f);
+                break;
+            case HARD_SHEET:
+                mPageFlipView.mPageFlip.setSemiPerimeterRatio(0.99f);
+        }
+        return this;
     }
     //----------------------------View methods---------------------------------------------------
 
@@ -284,13 +356,24 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     /**
      * This method return the view received from Adapter getCurrentView() method
      */
-    private View viewFromAdapter(int position, boolean addToTop) {
+    public View viewFromAdapter(int position, boolean addToTop) {
+        final boolean isMultiType = adapter.getViewTypeCount() > 1;
         View releasedView = releasedViews.isEmpty() ? null : releasedViews.removeFirst();
+        if (isMultiType) {
+            Object releaseTag = null;
+            if (releasedView != null) {
+                releaseTag = releasedView.getTag();
+            }
+            if (releaseTag != null && !releaseTag.equals(adapter.getItemViewType(position))) {
+                releasedView = null;
+            }
+        }
         Log.i(TAG, "viewFromAdapter: After releasedView");
         View view = adapter.getView(position, releasedView, this);
-//        if (adapter instanceof CustomFlipViewBaseAdapter) {
-//            onPageFlippedListener.onImageLoadingStatus(view, position, ((CustomFlipViewBaseAdapter) adapter).is_viewFullyLoaded());
-//        }
+        if (isMultiType) {
+            final int viewType = adapter.getItemViewType(position);
+            view.setTag(viewType);
+        }
         Log.i(TAG, "viewFromAdapter: got View");
         if (releasedView != null && view != releasedView) {
             addReleasedView(releasedView);
@@ -321,84 +404,28 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         }
     }
 
-    public void setMaxBackAlpha(float alpha) {
+    public DynamicFlipView setMaxBackAlpha(float alpha) {
+        Page.UseDominantColorForFoldBack(true);
         mPageFlipView.setMaxBackAlpha(alpha);
+        return this;
     }
 
-    public void useDominantColorForFoldBack(boolean useDominantColorForFoldBack) {
-        Page.UseDominantColorForFoldBack(useDominantColorForFoldBack);
+    private void useDominantColorForFoldBack(boolean use) {
+        Page.UseDominantColorForFoldBack(use);
     }
 
-    public void setPageBackColor(@ColorInt int color) {
+    public DynamicFlipView setPageBackColor(@ColorInt int color) {
+        useDominantColorForFoldBack(false);
         Page.setFoldPageBackColor(color);
+        return this;
     }
 
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
-
-
-        for (View child : bufferedViews) {
-            child.layout(0, 0, right - left, bottom - top);
-        }
-
-        if (changed || contentWidth == 0) {
-            int w = right - left;
-            int h = bottom - top;
-            mPageFlipView.layout(0, 0, w, h);
-            if (contentWidth != w || contentHeight != h) {
-                contentWidth = w;
-                contentHeight = h;
-            }
-        }
-        SupplyViewsToBitmapLoader();
+    public DynamicFlipView setPageBackColorToDominant() {
+        useDominantColorForFoldBack(true);
+        mPageFlipView.setMaxBackAlpha(1);
+        return this;
     }
 
-    public LinkedList<View> getBufferedViews() {
-        return bufferedViews;
-    }
-
-    public int getBufferIndex() {
-        return bufferIndex;
-    }
-
-    public void SupplyViewsToBitmapLoader() {
-//        for (int i = 1; i <= sideBufferSize; i++) {
-        if (bufferedViews.size() >= 1) {
-            //buffer index 0
-            View previousView = null;
-            View selectedView = bufferedViews.get(bufferIndex);//e.g view 0, index 0
-            if (onPageFlippedListener != null) {
-                onPageFlippedListener.onAfterViewLoadedToFlip(bufferIndex);
-            }
-
-            Log.i(TAG, " bufferView: selected view was added and index is " + adapterIndex);
-            View nextView = null;
-            if (bufferIndex - 1 >= 0) {
-                previousView = bufferedViews.get(bufferIndex - 1);
-                Log.i(TAG, " bufferView: previous view was added");
-            } else {
-                Log.i(TAG, "No previous View here");
-            }
-            if (bufferIndex < bufferedViews.size() - 1) {
-                nextView = bufferedViews.get(bufferIndex + 1);//e.g view 1, index 1
-                Log.i(TAG, " bufferView: next view was added");
-            } else {
-                Log.i(TAG, "view is null, no more view");
-            }
-            final FlipItem previous = new FlipItem(adapterIndex - 1, previousView);
-            final FlipItem current = new FlipItem(adapterIndex, selectedView);
-            final FlipItem next = new FlipItem(adapterIndex + 1, nextView);
-            BitmapLoader.get(context).loadViewsForFlipping(this, previous, current, next);
-//            BitmapLoader.get(context).loadViewsForFlipping(this
-//                    , adapterIndex - 1, previousView, adapterIndex, selectedView,
-//                    adapterIndex + 1, nextView);
-        }
-    }
-
-    public void getViewForBitmap(int which) {
-
-    }
 
     private int backgroundColor = Color.WHITE;
 
@@ -433,17 +460,12 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         } else {
             activeIndex = Math.min(adapterIndex, adapterDataCount - 1);
         }
-        int changed_active_index = onPageFlippedListener.onChangeActiveIndex(activeIndex);
-        Log.i(TAG, "changed_active_index is " + changed_active_index);
-        if (changed_active_index > -1) {
-            activeIndex = changed_active_index;
-        }
         releaseViews();
         setSelection(activeIndex);
     }
 
     private void releaseViews() {
-        for (View view : /*typed_bufferedViews[viewType]*/bufferedViews) {
+        for (View view : bufferedViews) {
             releaseView(view);
         }
         bufferedViews.clear();
@@ -459,8 +481,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     }
 
     private void addReleasedView(View view) {
-//        Assert.assertNotNull(view);
-        if (releasedViews /*typed_releasedViews[viewType]*/.size() < MAX_RELEASED_VIEW_SIZE) {
+        if (releasedViews.size() < MAX_RELEASED_VIEW_SIZE) {
             releasedViews.add(view);
 //            typed_releasedViews[viewType].add(view);
         }
@@ -473,7 +494,6 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     public void clearAdapter() {
         releaseViews();
         bufferedViews.clear();
-//        typed_bufferedViews[viewType].clear();
         adapterIndex = 0;
         mPageFlipView = null;
     }
@@ -481,8 +501,9 @@ public class DynamicFlipView extends AdapterView<Adapter> {
 
 //----------------------------PageFlipView Utils(Our Surface View)----------------------------
 
-    public void setOnPageFlippedListener(OnPageFlippedListener onPageFlippedListener) {
+    public DynamicFlipView setFlipLister(OnPageFlippedListener onPageFlippedListener) {
         this.onPageFlippedListener = onPageFlippedListener;
+        return this;
     }
 
     private void includePageFlipView(Context context) {
@@ -491,104 +512,30 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         } else {
             mPageFlipView = new PageFlipView(context, this);
         }
+        setPageType(PageType.MAGAZINE_SHEET);
+        mPageFlipView.setAlpha(0);
         Log.i(TAG, "before addViewInLayout");
         addViewInLayout(mPageFlipView, -1, new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT), false);
         Log.i(TAG, "After addViewInLayout");
     }
 
-
-    public void MakeAdapterVisible() {
-        mPageFlipView.setAlpha(0);
-    }
-
-
-    public void MakeFlipVisible() {
-        mPageFlipView.setAlpha(1);
-    }
-
-    public void ShowFlipView() {
-        if (mPageFlipView.getVisibility() == GONE) {
-            try {
-                new Handler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        setSelection(adapterIndex);
-                    }
-                });
-                SupplyViewsToBitmapLoader();
-                mPageFlipView.setVisibility(VISIBLE);
-                AutoRefreshAfter(500);
-                Log.i(TAG, "FlipView is visible now");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public void hideFlipView() {
-        setIs_to_flip(false);
-        if (mPageFlipView.getVisibility() == VISIBLE) {
-            try {
-//                SupplyViewsToBitmapLoader();
-//                AutoRefreshAfter(500);
-//                getmPageFlipView().startAnimation(AnimationUtils.loadAnimation(context, R.anim.flip_fade_in));
-                mPageFlipView.setVisibility(GONE);
-                Log.i(TAG, "View is gone");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-
-    public void hideFlipViewForRefresh() {
-
-        if (mPageFlipView.getVisibility() == VISIBLE /*&& is_to_flip*/) {
-            try {
-                setSelection(adapterIndex);
-//                View_Utils.ShowView_with_ZoomOut((ViewGroup) mPageFlipView.getParent());
-                mPageFlipView.setVisibility(GONE);
-                Log.i(TAG, "View is gone");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    public void ShowFlipViewForRefresh() {
-        if (mPageFlipView.getVisibility() == GONE /*&& !is_to_flip*/) {
-            try {
-                setSelection(adapterIndex);
-                mPageFlipView.setVisibility(VISIBLE);
-                Log.i(TAG, "FlipView is visible now");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    setIs_to_flip(true);
-                }
-            }, 100);
-        }
-    }
-
     private void updateVisibleView(int index) {
-        for (int i = 0; i < bufferedViews/*typed_bufferedViews[viewType]*/.size(); i++) {
-            bufferedViews/*typed_bufferedViews[viewType]*/.get(i).setVisibility(index == i ? VISIBLE : GONE);
+        for (int i = 0; i < bufferedViews.size(); i++) {
+//            final View view = bufferedViews.get(i);
+//            view.setAlpha(index == i ? 1 : 0);
+            bufferedViews.get(i).setVisibility(index == i ? VISIBLE : GONE);
         }
     }
 
-    public void PostflippedToView(final int indexInAdapter) {
+    public void postFlippedToView(final int indexInAdapter) {
         new Handler().post(new Runnable() {
             @Override
             public void run() {
                 try {
                     flippedToView(indexInAdapter);
                 } catch (Exception e) {
+                    Log.i(TAG, "smtn went wrong");
                     e.printStackTrace();
                 }
             }
@@ -596,29 +543,34 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     }
 
     int last_index = -1;
+    public boolean is_moving_fwd = true;
 
     public void listenForPageFlip() {
         if (onPageFlippedListener != null)
             onPageFlippedListener.onPageFlipped(
-                    bufferedViews/*typed_bufferedViews[viewType]*/.get(bufferIndex)
+                    bufferedViews.get(bufferIndex)
                     , adapterIndex
-                    , bufferedViews/*typed_bufferedViews[viewType]*/.get(bufferIndex).getId());
+                    , bufferedViews.get(bufferIndex).getId());
         if (last_index == -1) {
             last_index = adapterIndex;
         } else {
             if (last_index < adapterIndex) {
                 //Forward
-                if (onPageFlippedListener != null)
+                if (onPageFlippedListener != null) {
+                    is_moving_fwd=true;
                     onPageFlippedListener.onPageFlippedForward(
-                            bufferedViews/*typed_bufferedViews[viewType]*/.get(bufferIndex)
+                            bufferedViews.get(bufferIndex)
                             , adapterIndex
-                            , bufferedViews/*typed_bufferedViews[viewType]*/.get(bufferIndex).getId());
+                            , bufferedViews.get(bufferIndex).getId());
+                }
             } else if (last_index > adapterIndex) {
-                if (onPageFlippedListener != null)
+                if (onPageFlippedListener != null) {
+                    is_moving_fwd=false;
                     onPageFlippedListener.onPageFlippedBackward(
-                            bufferedViews/*typed_bufferedViews[viewType]*/.get(bufferIndex)
+                            bufferedViews.get(bufferIndex)
                             , adapterIndex
-                            , bufferedViews/*typed_bufferedViews[viewType]*/.get(bufferIndex).getId());
+                            , bufferedViews.get(bufferIndex).getId());
+                }
                 //Backward
             }
             last_index = adapterIndex;
@@ -628,7 +580,6 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     public void flippedToView(int indexInAdapter) {
         Log.i(TAG, String.format("flippedToView: %d, isPost %s", indexInAdapter, null));
         if (indexInAdapter >= 0 && indexInAdapter < adapterDataCount) { //let say count is 5
-
             if (indexInAdapter == adapterIndex + 1) { //forward one page e.g from 3 to 4
                 if (adapterIndex < adapterDataCount - 1) {// 3<4, proceed...
                     adapterIndex++; //e.g 3 -> 4
@@ -661,8 +612,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
                         //Remove the old next, and add it to released list.
                         releaseView(bufferedViews.removeLast()); //remove the last view in buffer
                     }
-                    if (adapterIndex - sideBufferSize >= 0) { // e.g 0 == 0, continue...
-
+                    if (adapterIndex - sideBufferSize >= 0) {
                         //e.g add the view 0 at the top of buffer
 //                        is_selected_view = true;
                         bufferedViews.addFirst(viewFromAdapter(adapterIndex - sideBufferSize, false));
@@ -674,7 +624,6 @@ public class DynamicFlipView extends AdapterView<Adapter> {
                     //make the previous view visible, and hide others
                     updateVisibleView(bufferIndex);
                 } else {
-
                     Log.i(TAG, "index is less than 0");
                 }
 //                }
@@ -687,68 +636,137 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         }
     }
 
-    public void checkViewStatus() {
-        if (adapter instanceof CustomFlipViewBaseAdapter) {
-            if (onPageFlippedListener != null)
-                onPageFlippedListener.onImageLoadingStatus(getSelectedView(), adapterIndex, ((CustomFlipViewBaseAdapter) adapter).is_viewFullyLoaded());
-        }
-    }
-
     public PageFlipView getmPageFlipView() {
         return mPageFlipView;
     }
 
-    //----------------------------Handling Touch Events----------------------------------------------------------
+    public void SupplyViewsToBitmapLoader() {
+        if (bufferedViews.size() >= 1) {
+//            View selectedView = bufferedViews.get(bufferIndex);
+//            View previousView = null;
+//            if (bufferIndex - 1 >= 0)
+//                previousView = bufferedViews.get(bufferIndex - 1);
+//            View nextView = null;
+//            if (bufferIndex < bufferedViews.size() - 1)
+//                nextView = bufferedViews.get(bufferIndex + 1);
+            final FlipItem previous = new FlipItem(adapterIndex - 1, getPreviousView());
+            final FlipItem current = new FlipItem(adapterIndex, getSelectedView());
+            final FlipItem next = new FlipItem(adapterIndex + 1, getNextView());
+            BitmapLoader.get(context).loadViewsForFlipping(this, previous, current, next);
+        }
+    }
 
+
+    private void reloadAnimationPage() {
+        try {
+            SupplyViewsToBitmapLoader();
+            Log.e(TAG, "reloadAnimationPage: supplied");
+        } catch (Exception e) {
+            Log.e(TAG, "reloadAnimationPage: Unable to supply");
+            e.printStackTrace();
+        }
+        RefreshFlip();
+    }
+
+    public void setSystemUIChangeListeners(Activity activity, final SystemUIVisibilityLister visibilityListener) {
+        View decorView = activity.getWindow().getDecorView();
+        decorView.setOnSystemUiVisibilityChangeListener
+                (new View.OnSystemUiVisibilityChangeListener() {
+                    @Override
+                    public void onSystemUiVisibilityChange(int visibility) {
+                        // TODO: The system bars are visible. Make any desired
+                        if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0) {
+                            visibilityListener.onUiVisible();
+                        } else {
+                            // TODO: The system bars are NOT visible. Make any desired
+                            reloadAnimationPage();
+                            visibilityListener.onUiHidden();
+//                            layoutParams.bottomMargin = 0;
+                        }
+                    }
+                });
+    }
+
+    public interface SystemUIVisibilityLister {
+        void onUiVisible();
+
+        void onUiHidden();
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+        super.onLayout(changed, left, top, right, bottom);
+        for (View child : bufferedViews) {
+            child.layout(0, 0, right - left, bottom - top);
+        }
+        if (changed || contentWidth == 0) {
+            int w = right - left;
+            int h = bottom - top;
+            mPageFlipView.layout(0, 0, w, h);
+            if (contentWidth != w || contentHeight != h) {
+                contentWidth = w;
+                contentHeight = h;
+            }
+        }
+//        reloadAnimationPage();
+//        Log.e(TAG, "onLayout: supplied");
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+//        reloadAnimationPage();
+        Log.e(TAG, "dispatchDraw:");
+    }
+
+    Runnable mLChildDownRun = new Runnable() {
+        @Override
+        public void run() {
+            if (onPageFlippedListener != null) {
+                onPageFlippedListener.onFingerDown(getSelectedView(), adapterIndex);
+            }
+        }
+    };
+    Runnable mLChildUpRun = new Runnable() {
+        @Override
+        public void run() {
+            if (onPageFlippedListener != null) {
+                onPageFlippedListener.onFingerUp(getSelectedView(), adapterIndex);
+            }
+        }
+    };
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        final int action = ev.getAction();
+        if (action == MotionEvent.ACTION_UP) {
+            mHandler.postDelayed(mLChildUpRun, 10);
+            reloadAnimationPage();
+        } else if (action == MotionEvent.ACTION_DOWN) {
+            reloadAnimationPage();
+        }            mHandler.postDelayed(mLChildDownRun, 10);
+
+        return super.dispatchTouchEvent(ev);
+    }
 
     @Override
     public boolean onInterceptTouchEvent(final MotionEvent ev) {
         if (is_to_flip()) {
             switch (ev.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    if (onPageFlippedListener != null) {
-                        onPageFlippedListener.onHold(getSelectedView(), adapterIndex);
-                    }
-                    is_click_trigger = true;
-                    mPageFlipView.onFingerDown(ev.getX(), ev.getY());
                     last_position = ev.getX();
                     return !isClickToFlip(ev);
-//                     return false;
                 case MotionEvent.ACTION_UP:
-//                    long time_now = System.currentTimeMillis();
-                    if (onPageFlippedListener != null) {
-                        onPageFlippedListener.onRelease(getSelectedView(), adapterIndex);
-                    }
-                    if (mPageFlipView.isShown()) {
-                        mPageFlipView.onFingerUp(ev.getX(), ev.getY());
-                        return !isClickToFlip(ev);
-//                        return false;
-                    }
+                    return !isClickToFlip(ev);
                 case MotionEvent.ACTION_MOVE:
                     float distance_move = last_position - ev.getX();
-                    if (can_start_flipping(distance_move)  /*&& !isClickToFlip(ev)*/) {
-                        is_click_trigger = false;
-                        mPageFlipView.onFingerMove(ev.getX(), ev.getY());
+                    if (can_start_flipping(distance_move)) {
                         return true;
                     }
                     last_position = ev.getX();
-
             }
         }
         return false;
-    }
-
-    private boolean can_start_moving(long time) {
-        Log.e(TAG, "onInterceptTouchEvent: time long is " +
-                ViewConfiguration.getLongPressTimeout());
-        return time >= ViewConfiguration.getLongPressTimeout();
-
-    }
-
-    boolean is_click_trigger = false;
-
-    public void setIs_click_trigger(boolean is_click_trigger) {
-        this.is_click_trigger = is_click_trigger;
     }
 
     @Override
@@ -756,60 +774,58 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         if (is_to_flip()) {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    is_click_trigger = true;
+                    mHandler.removeCallbacks(mLChildDownRun);
                     if (onPageFlippedListener != null) {
-                        onPageFlippedListener.onUserFinger_isDown(getSelectedView(), adapterIndex);
+                        onPageFlippedListener.onFingerDownToFlip(getSelectedView(), adapterIndex);
                     }
-                    mPageFlipView.setAlpha(1);
+                    //make flip visible
+                    mHandler.removeCallbacks(showAnimRunnable);
+                    mHandler.postDelayed(showAnimRunnable, 40);
                     mPageFlipView.onFingerDown(event.getX(), event.getY());
                     infinite_flip_run_down = new Runnable() {
                         @Override
                         public void run() {
                             if (is_click_toFlipForward(event)) {
-                                is_click_trigger = true;
                                 is_infiniteFlipForward = true;
                                 if (onPageFlippedListener != null)
-                                    onPageFlippedListener.onFastFlippingStarted(getSelectedView(), adapterIndex, true);
-                                flip_InfinitelyWithLongtouch(event.getX(), event.getY(), infiniteFlipForwardDuration, true);
+                                    onPageFlippedListener.onFastFlipStart(getSelectedView(), adapterIndex, true);
+                                flipInfiniteLongtouch(event.getX(), event.getY(), infiniteFlipForwardDuration, true);
                             } else if (is_click_toFlipBack(event)) {
-                                is_click_trigger = true;
                                 is_infiniteFlipBackward = true;
                                 if (onPageFlippedListener != null)
-                                    onPageFlippedListener.onFastFlippingStarted(getSelectedView(), adapterIndex, false);
-                                flip_InfinitelyWithLongtouch(event.getX(), event.getY(), infiniteFlipBackwardDuration, false);
+                                    onPageFlippedListener.onFastFlipStart(getSelectedView(), adapterIndex, false);
+                                flipInfiniteLongtouch(event.getX(), event.getY(), infiniteFlipBackwardDuration, false);
                             }
                         }
                     };
                     infinite_flip_thread_down.postDelayed(infinite_flip_run_down, ViewConfiguration.getLongPressTimeout());
                     return true;
                 case MotionEvent.ACTION_UP:
-                    infinite_flip_thread_down.removeCallbacks(infinite_flip_run_down);
-                    infinite_flip_thread.removeCallbacks(infinite_flip_run);
-                    if (is_infiniteFlipForward) {
-                        checkViewStatus();
-                        if (onPageFlippedListener != null) {
-                            onPageFlippedListener.onFastFlippingEnded(getSelectedView(), adapterIndex, true);
-                        }
-                    } else if (is_infiniteFlipBackward) {
-                        checkViewStatus();
-                        if (onPageFlippedListener != null)
-                            onPageFlippedListener.onFastFlippingEnded(getSelectedView(), adapterIndex, false);
-                    }
+                    mHandler.removeCallbacks(mLChildDownRun);
+                    mHandler.removeCallbacks(mLChildUpRun);
+
                     if (is_click_toFlipBack(event)) {
                         mPageFlipView.setFlipDuration(FlipBackwardDuration);
                     }
                     mPageFlipView.onFingerUp(event.getX(), event.getY());
-                    if (is_click_toFlipBack(event) && !(is_infiniteFlipForward || is_infiniteFlipBackward)) {
-                        ResetFlipDuration(infiniteFlipBackwardDuration - 100);
+                    infinite_flip_thread_down.removeCallbacks(infinite_flip_run_down);
+                    infinite_flip_thread.removeCallbacks(infinite_flip_run);
+                    if (is_infiniteFlipForward || is_infiniteFlipBackward) {
+                        if (onPageFlippedListener != null) {
+                            onPageFlippedListener.onFastFlipEnd(getSelectedView(), adapterIndex
+                                    , is_infiniteFlipForward);
+                        }
                     }
                     if (!is_infiniteFlipBackward || !is_infiniteFlipForward) {
                         if (onPageFlippedListener != null)
-                            onPageFlippedListener.onUserFinger_isUp(getSelectedView(), adapterIndex);
+                            onPageFlippedListener.onFingerUpToFlip(getSelectedView(), adapterIndex);
                     }
                     is_infiniteFlipForward = false;
                     is_infiniteFlipBackward = false;
                     return true;
                 case MotionEvent.ACTION_MOVE:
+                    mHandler.removeCallbacks(mLChildDownRun);
+                    mHandler.removeCallbacks(mLChildUpRun);
                     mPageFlipView.onFingerMove(event.getX(), event.getY());
 //                    is_click_trigger = false;
                     return true;
@@ -818,8 +834,56 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         return false;
     }
 
-    public boolean is_click_trigger() {
-        return is_click_trigger;
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT_WATCH)
+    @Override
+    public WindowInsets onApplyWindowInsets(final WindowInsets insets) {
+        if (mFit) {
+            setPadding(
+                    insets.getSystemWindowInsetLeft(),
+                    insets.getSystemWindowInsetTop(),
+                    insets.getSystemWindowInsetRight(),
+                    insets.getSystemWindowInsetBottom()
+            );
+            return insets.consumeSystemWindowInsets();
+        } else {
+            setPadding(0, 0, 0, 0);
+            return insets;
+        }
+    }
+
+    private boolean mFit = false;
+
+    public boolean isFit() {
+        return mFit;
+    }
+
+    public void setFit(final boolean fit) {
+        if (mFit == fit) {
+            return;
+        }
+
+        mFit = fit;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            requestApplyInsets();
+        } else {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+                //noinspection deprecation
+                requestFitSystemWindows();
+            }
+        }
+    }
+
+    @Override
+    protected boolean fitSystemWindows(final Rect insets) {
+        if (mFit) {
+            setPadding(insets.left, insets.top, insets.right, insets.bottom);
+            // Do not propagate the system insets further.
+            return true;
+        } else {
+            setPadding(0, 0, 0, 0);
+            // Do not consume the insets and allow other views handle them.
+            return false;
+        }
     }
 
     public void flip_forward_to(int page_no) {
@@ -843,13 +907,13 @@ public class DynamicFlipView extends AdapterView<Adapter> {
             try {
                 mPageFlipView.mDrawLock.lock();
                 if (mPageFlipView.mPageRender != null && mPageFlipView.mPageRender.onFingerUp(x, y)) {
-                    mPageFlipView.UpdateFromAdapter();
+//                    mPageFlipView.UpdateFromAdapter();
                     mPageFlipView.requestRender();
                     if (adapterIndex != page_no - 1) {
                         new Handler().postDelayed(new Runnable() {
                             @Override
                             public void run() {
-//                                MakeFlipVisible();
+
                                 flip_to_where(x, y, page_no);
                             }
                         }, 200);
@@ -861,8 +925,8 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         }
     }
 
-    public void flip_InfinitelyWithLongtouch(float x, float y, int duration,
-                                             boolean flip_forward) {
+    public void flipInfiniteLongtouch(float x, float y, int duration,
+                                      boolean flip_forward) {
         flip_infinitely(x, y, duration, flip_forward);
     }
 
@@ -928,9 +992,8 @@ public class DynamicFlipView extends AdapterView<Adapter> {
                                 final boolean flip_forward) {
         if (adapterDataCount > 1 && adapterIndex == adapterDataCount - 2) {
             Log.i(TAG, "this is the last page page " + adapterIndex + "of count " + adapterDataCount);
-            if (onPageFlippedListener != null)
-                onPageFlippedListener.onEndPageReached(getSelectedView(), adapterIndex, flip_forward);
         }
+        mPageFlipView.showAnimation();
         PageFlip mPageFlip = getmPageFlip();
         PageFlipView mPageFlipView = getmPageFlipView();
         if (!mPageFlip.isAnimating() && mPageFlip.getFirstPage() != null) {
@@ -942,9 +1005,8 @@ public class DynamicFlipView extends AdapterView<Adapter> {
             try {
                 mPageFlipView.mDrawLock.lock();
                 if (mPageFlipView.mPageRender != null && mPageFlipView.mPageRender.onFingerUp(x, y)) {
-                    mPageFlipView.UpdateFromAdapter();
+//                    mPageFlipView.UpdateFromAdapter();
                     mPageFlipView.requestRender();
-//                    checkViewStatus();
                     infinite_flip_run = new Runnable() {
                         @Override
                         public void run() {
@@ -1006,7 +1068,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
 
     private boolean can_start_flipping(float minimum_gap) {
         ViewConfiguration configuration = ViewConfiguration.get(getContext());
-        return Math.abs(minimum_gap) > configuration.getScaledTouchSlop() *4;
+        return Math.abs(minimum_gap) > configuration.getScaledTouchSlop() * 4;
     }
 
 
@@ -1097,40 +1159,6 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         return View_Utils.getScreenResolution(getContext()).getHeight() / 3.0f /*- 300.662f*/;
     }
 
-    public interface OnPageFlippedListener {
-        void onPageFlipped(View page, int page_no, long id);
-
-        void onPageFlippedBackward(View page, int page_no, long id);
-
-        void onPageFlippedForward(View page, int page_no, long id);
-
-        void onUserFinger_isDown(View page, int page_no);
-
-        void onFastFlippingStarted(View page, int page_no, boolean is_forward);
-
-        int onChangeActiveIndex(int active_index);
-
-        void onFastFlippingEnded(View page, int page_no, boolean is_forward);
-
-        void onRefreshForwardBackwardFinished(int time_taken);
-
-        void onUserFinger_isUp(View page, int page_no);
-
-        void onImageLoadingStatus(View page, int page_no, boolean is_ViewFullyLoaded);
-
-        void onAfterViewLoadedToFlip(int page_no);
-
-        void onRestorePage(int page_no, boolean is_forward);
-
-        void onResetFlipSpeed();
-
-        void onHold(View v, int pos);
-
-        void onRelease(View v, int pos);
-
-        void onEndPageReached(View v, int pos, boolean flip_forward);
-    }
-
     //Refresh trials...........
 
     private Handler handing_auto_refresh;
@@ -1142,24 +1170,12 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         }
     }
 
-    public void AutoRefreshAfter(int duration) {
-        CancelAutoRefresh();
-        handing_auto_refresh = new Handler();
-        auto_refresh_runnable = new Runnable() {
-            @Override
-            public void run() {
-//                adapterPageFlipView.getmPageFlipView().startAnimation(AnimationUtils.loadAnimation(context, R.anim.flip_fade_in));
-                RefreshFlip();
-                MakeFlipVisible();
-            }
-        };
 
-        handing_auto_refresh.postDelayed(auto_refresh_runnable, duration);
-    }
+    Handler refresh_handler = new Handler();
+    Runnable r_run;
 
 
     public void RefreshFlip() {
-
         r_run = new Runnable() {
             public void run() {
                 PageFlip mPageFlip = getmPageFlip();
@@ -1169,6 +1185,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
                         if (mPageFlipView.mPageRender != null && mPageFlipView.mPageRender.onRefreshPage()) {
                             mDrawingState = DrawingState.REFRESH_DRAW;
                             mPageFlipView.requestRender();
+//                            mPageFlipView.showAnimation();
                         }
                     } finally {
                         mPageFlipView.mDrawLock.unlock();
@@ -1177,88 +1194,37 @@ public class DynamicFlipView extends AdapterView<Adapter> {
             }
         };
         refresh_handler.post(r_run);
-
         Log.i(TAG, "RefreshFlip: page is refreshed");
     }
+
+
+    public interface OnPageFlippedListener {
+        void onPageFlipped(View page, int page_no, long id);
+
+        void onPageFlippedBackward(View page, int page_no, long id);
+
+        void onPageFlippedForward(View page, int page_no, long id);
+
+        void onFingerDown(View v, int pos);
+
+        void onFingerUp(View v, int pos);
+
+        void onFingerDownToFlip(View page, int page_no);
+
+        void onFingerUpToFlip(View page, int page_no);
+
+        void onFastFlipStart(View page, int page_no, boolean is_forward);
+
+        void onFastFlipEnd(View page, int page_no, boolean is_forward);
+
+    }
+
 
     public boolean is_from_refresh;
 
     // First attempts to refresh pages...........................................
-    public void Refresh_Forward() {
-        MakeAdapterVisible();
-        if (adapterDataCount <= 1) {
-            return;
-        }
-        if (adapterIndex == 0) {
-            RefreshBack_Forward();
-            return;
-        }
-        setSelection(adapterIndex > 0 ? adapterIndex - 1 : adapterIndex);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                is_from_refresh = true;
-                mPageFlipView.setFlipDuration(900);
-                flip_toNextPage(100);
-            }
-        }, 300);
-        ResetFlipDuration(1000);
-    }
 
 
-    public void RefreshBack_Forward() {
-        if (adapterDataCount <= 1) {
-            MakeAdapterVisible();
-            return;
-        }
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                is_from_refresh = true;
-                mPageFlipView.setFlipDuration(600);
-                flip_toNextPage(100);
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        flip_toPreviousPage(100);
-                    }
-                }, 400);
-            }
-        }, 300);
-        ResetFlipDuration(1500);
-    }
-
-    public void MultipleFlipRefresh(final boolean forward) {
-        if (adapterIndex == 0) {
-            RefreshBack_Forward();
-            return;
-        }
-        setSelection(adapterIndex > 0 ? adapterIndex - 1 : adapterIndex);
-//        View_Utils.ShowView_with_ZoomOut((ViewGroup) getmPageFlipView().getParent());
-        is_from_refresh = true;
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                getmPageFlipView().setFlipDuration(600);
-                flip_forward_to(adapterIndex + 2);
-            }
-        }, 200);
-        mPageFlipView.setFlipDuration(400);
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                flip_toPreviousPage(100);
-            }
-        }, 800);
-        ResetFlipDuration(800);
-    }
-
-    Handler refresh_handler = new Handler();
-    Runnable r_run;
-
-    public void CancleRefresh() {
-        refresh_handler.removeCallbacks(r_run);
-    }
 //    ........................................................................
 
 
@@ -1269,21 +1235,4 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     public void setmDrawingState(DrawingState mDrawingState) {
         this.mDrawingState = mDrawingState;
     }
-
-    public synchronized void ResetFlipDuration(final int wait_duration) {
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (is_from_refresh) {
-                    MakeFlipVisible();
-                    if (onPageFlippedListener != null)
-                        onPageFlippedListener.onRefreshForwardBackwardFinished(wait_duration);
-                    is_from_refresh = false;
-                }
-                if (onPageFlippedListener != null)
-                    onPageFlippedListener.onResetFlipSpeed();
-            }
-        }, wait_duration);
-    }
-
 }

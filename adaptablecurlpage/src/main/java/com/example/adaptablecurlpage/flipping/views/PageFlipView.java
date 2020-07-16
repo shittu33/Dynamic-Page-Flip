@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.adaptablecurlpage.flipping;
+package com.example.adaptablecurlpage.flipping.views;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLSurfaceView.Renderer;
 import android.os.Handler;
 import android.os.Message;
-import android.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
 
 import com.eschao.android.widget.pageflip.PageFlip;
 import com.eschao.android.widget.pageflip.PageFlipException;
-import com.eschao.android.widget.pageflip.PageFlipState;
-import com.example.adaptablecurlpage.flipping.utils.Constants;
+import com.example.adaptablecurlpage.flipping.render.DoublePagesRender;
+import com.example.adaptablecurlpage.flipping.render.PageRender;
+import com.example.adaptablecurlpage.flipping.render.SinglePageRender;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -98,12 +98,12 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
         // create PageFlip
         mPageFlip = new PageFlip(context);
         mPageFlip.setWidthRatioOfClickToFlip(0.08f);
-        mPageFlip.setSemiPerimeterRatio(0.79f)//0.99 b4//0.69f b4
-                .setShadowWidthOfFoldEdges(5, 60, 0.3f)
-                .setShadowWidthOfFoldBase(5, 80, 0.4f)
-//                .setShadowWidthOfFoldEdges(7, 70, 0.4f)
-//                .setShadowWidthOfFoldBase(7, 90, 0.5f)
-                .setPixelsOfMesh(pixelsOfMesh)
+//        mPageFlip.setSemiPerimeterRatio(0.99f)//0.99 b4//0.79f b4
+//                mPageFlip.setShadowWidthOfFoldEdges(5, 60, 0.23f)
+//                .setShadowWidthOfFoldBase(5, 80, 0.4f)
+//                .setShadowColorOfFoldEdges(0.1f,0.8f,0.3f,0.0f)
+//                .setShadowColorOfFoldBase(0.1f,0.3f,0.1f,0.1f)
+                mPageFlip.setPixelsOfMesh(pixelsOfMesh)
                 .enableAutoPage(isAuto);
         mPageNo = 0; // getting initial page_no
         mDrawLock = new ReentrantLock();
@@ -113,7 +113,7 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
         setEGLContextClientVersion(2);
         setRenderer(this);
         setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        //        setZOrderOnTop(true);
+//                setZOrderOnTop(true);
         // configure render
 //        if(Build.VERSION.SDK_INT>=11){
 //        }
@@ -130,7 +130,7 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
         mPageRender.setmPageNo(mPageNo);
 //        mPageRender.mPageNo = position;
 //        requestRender();
-        Log.i(TAG1, "New Page no " + mPageRender.mPageNo);
+//        Log.i(TAG1, "New Page no " + mPageRender.mPageNo);
     }
 
     public PageRender getmPageRender() {
@@ -227,7 +227,6 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
         // if the animation is going, we should ignore this event to avoid
         // mess drawing on screen
 //        Log.i(TAG,"onDown Up X is " + x + " and Y is " + y);
-//        setAlpha(1);
         if (!mPageFlip.isAnimating() && mPageFlip.getFirstPage() != null) {
             mPageFlip.onFingerDown(x, y);
         }
@@ -262,6 +261,15 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
         }
     }
 
+    public void showAnimation() {
+        setAlpha(1);
+    }
+
+    public void hideAnimation() {
+        setAlpha(0);
+    }
+
+
     /**
      * Handle finger up event and start animating if need
      *
@@ -274,43 +282,14 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
             try {
                 mDrawLock.lock();
                 if (mPageRender != null && mPageRender.onFingerUp(x, y)) {
-                    UpdateFromAdapter();
+//                    UpdateFromAdapter();
                     requestRender();
-                    mDynamicFlipView.checkViewStatus();
-                    setAlpha(0);
+//                    setAlpha(0);
                 }
             } finally {
                 mDrawLock.unlock();
-                setAlpha(0);
+//                setAlpha(0);
             }
-        }
-    }
-
-    public boolean is_click_trigger() {
-        Log.i(TAG1, mDynamicFlipView.is_click_trigger ? "is click" : "is move");
-        return mDynamicFlipView.is_click_trigger;
-    }
-
-    public void UpdateFromAdapter() {
-        if (mPageFlip.getFlipState() == PageFlipState.FORWARD_FLIP) {
-            mPageNo++;
-            mPageRender.setmPageNo(mPageNo);
-            mDynamicFlipView.PostflippedToView(mPageNo);
-            Log.i(TAG1, "TMP index ++ " + temp_index);
-            Log.i(TAG1, "after flippedToView with mPageNo " + mPageNo + ", " + mPageRender.getPageNo());
-        } else if (mPageFlip.getFlipState() == PageFlipState.BACKWARD_FLIP) {
-            if (mPageFlip.is_back_restore) {
-                if (mDynamicFlipView.onPageFlippedListener != null)
-                    mDynamicFlipView.onPageFlippedListener.onRestorePage(mPageNo, false);
-            }
-            mPageNo--;
-            mPageRender.setmPageNo(mPageNo);
-            Log.i(TAG1, "TMP index -- " + temp_index);
-            mDynamicFlipView.PostflippedToView(mPageNo);
-            Log.i(TAG1, "after flippedToView back with mPageNo " + mPageNo + ", " + mPageRender.getPageNo());
-        } else if (mPageFlip.getFlipState() == PageFlipState.RESTORE_FLIP) {
-            if (mDynamicFlipView.onPageFlippedListener != null)
-                mDynamicFlipView.onPageFlippedListener.onRestorePage(mPageNo, true);
         }
     }
 
@@ -391,10 +370,10 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
      * Page render will send message in GL thread, but we want to handle those
      * messages in main thread that why we need handler here
      */
+    @SuppressLint("HandlerLeak")
     private void newHandler() {
         mHandler = new Handler() {
             public void handleMessage(Message msg) {
-
                 switch (msg.what) {
                     case PageRender.MSG_ENDED_DRAWING_FRAME:
                         try {
@@ -409,7 +388,6 @@ public class PageFlipView extends GLSurfaceView implements Renderer {
                             mDrawLock.unlock();
                         }
                         break;
-
                     default:
                         break;
                 }

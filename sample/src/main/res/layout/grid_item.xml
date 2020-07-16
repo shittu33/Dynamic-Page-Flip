@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:background="@android:color/white"
+    android:layout_height="match_parent">
+
+    <TableRow
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <com.example.sample.view.TouchImageView
+            android:id="@+id/img1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_person_black_24dp" />
+
+        <com.example.sample.view.TouchImageView
+            android:id="@+id/img2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:layout_weight="1"
+            android:src="@drawable/ic_person_black_24dp" />
+    </TableRow>
+
+    <TableRow
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <com.example.sample.view.TouchImageView
+            android:id="@+id/img3"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_person_black_24dp" />
+
+        <com.example.sample.view.TouchImageView
+            android:id="@+id/img4"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_person_black_24dp" />
+
+    </TableRow>
+</TableLayout>

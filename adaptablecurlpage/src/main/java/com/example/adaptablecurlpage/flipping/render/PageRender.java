@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.example.adaptablecurlpage.flipping;
+package com.example.adaptablecurlpage.flipping.render;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -162,7 +162,7 @@ public abstract class PageRender implements OnPageFlipListener {
     /**
      * Render page frame
      */
-    abstract void onDrawFrame();
+    public abstract void onDrawFrame();
 
     /**
      * Handle surface changing event
@@ -170,7 +170,7 @@ public abstract class PageRender implements OnPageFlipListener {
      * @param width  surface width
      * @param height surface height
      */
-    abstract void onSurfaceChanged(int width, int height);
+    public abstract void onSurfaceChanged(int width, int height);
 
     /**
      * Handle drawing ended event
