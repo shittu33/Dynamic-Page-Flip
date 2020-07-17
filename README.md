@@ -20,17 +20,17 @@ dynamic_flip_view.loadSingleLayoutPages(R.layout.scroll_text_item, pagesData) { 
 ```
 #### Java
 ```Java
-     for (int i = 1; i < 16; i++) {
-          pages_data.add("Some text");
-     }
+for (int i = 1; i < 16; i++) {
+   pages_data.add("Some text");
+}
 dynamicFlipView.loadSingleLayoutPages(R.layout.scroll_text_item, pages_data
-               , new DynamicFlipView.HandleSingleViewCallback<String>() {
-                  @Override
-                  public void HandleView(View v, int position, String data) {
-                     final EditText tV = v.findViewById(R.id.tV);
-                     tV.setText(data);
-                  }
-               });
+          , new DynamicFlipView.HandleSingleViewCallback<String>() {
+            @Override
+            public void HandleView(View v, int position, String data) {
+               final EditText tV = v.findViewById(R.id.tV);
+               tV.setText(data);
+            }
+         });
 ```
 ## Credit
 Eschao Page Flip
