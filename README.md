@@ -37,10 +37,11 @@ To use a different layout in pages
 #### Kotlin 
 
 ```kotlin
-        val dataList = LinkedList<Pair<Int, MutableMap<Int, *>>>()
-        dataList.add(R.layout.item1 with mutableMapOf(R.id.tV to "Let's \n Begin!", R.id.img to R.drawable.google_fun))
-        dataList.add(R.layout.item2 with mutableMapOf(R.id.tV to "Get Ready!!", R.id.img to R.drawable.dance))
-      
+val dataList = LinkedList<Pair<Int, MutableMap<Int, *>>>()
+dataList.add(R.layout.item1 with mutableMapOf(R.id.tV to "Let's \n Begin!", R.id.img to R.drawable.google_fun))
+dataList.add(R.layout.item2 with mutableMapOf(R.id.tV to "Get Ready!!", R.id.img to R.drawable.dance))
+dataList.add(R.layout.scroll_text_item with mutableMapOf(R.id.tV to getRubbishText()))
+dataList.add(R.layout.item_simple with mutableMapOf(R.id.img to R.drawable.dance))
 dynamic_flip_view.loadMultiLayoutPages(dataList) { position, data, layout
         ->
          when (layout) {
@@ -52,7 +53,7 @@ dynamic_flip_view.loadMultiLayoutPages(dataList) { position, data, layout
 //                            "from (item_simple to scroll_image_item")
                 }
             }
-            //All View Type has image or txt to update
+            //Handle anything common with all view
             for (viewId in data.keys)
                 loadData(viewId)
 }
