@@ -32,6 +32,31 @@ dynamicFlipView.loadSingleLayoutPages(R.layout.scroll_text_item, pages_data
             }
          });
 ```
+
+To use a different layout in pages
+#### Kotlin 
+
+```kotlin
+        val dataList = LinkedList<Pair<Int, MutableMap<Int, *>>>()
+        dataList.add(R.layout.item1 with mutableMapOf(R.id.tV to "Let's \n Begin!", R.id.img to R.drawable.google_fun))
+        dataList.add(R.layout.item2 with mutableMapOf(R.id.tV to "Get Ready!!", R.id.img to R.drawable.dance))
+      
+dynamic_flip_view.loadMultiLayoutPages(dataList) { position, data, layout
+        ->
+         when (layout) {
+                R.layout.item1,
+                R.layout.item2 -> click()//only item1 & 2 has button to click
+                R.layout.item_simple,
+                R.layout.scroll_image_item -> {
+//                    TODO("Do anything specific " +
+//                            "from (item_simple to scroll_image_item")
+                }
+            }
+            //All View Type has image or txt to update
+            for (viewId in data.keys)
+                loadData(viewId)
+}
+```
 ## Credit
 Eschao Page Flip
 
