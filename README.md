@@ -1,12 +1,16 @@
 # Dynamic-Page-Flip
 A dynamic flip View that accept adapter to populate it child Views like  a View Pager
 
+##DEMO
+![alt text](https://github.com/shittu33/SimpleImagePicker/blob/master/single.gif?raw=true)![alt text](https://github.com/shittu33/SimpleImagePicker/blob/master/multi.gif?raw=true)![alt text](https://github.com/shittu33/SimpleImagePicker/blob/master/single.gif?raw=true)
+
+##Credit
+Eschao Page Flip
+
+
 ### License
 ```
 Copyright 2020 Abdulmujeeb Olawale
-
-Copyright 2016 Eschao
-
 Licensed under the Apache License, Version 2.0
 
    http://www.apache.org/licenses/LICENSE-2.0
