@@ -6,6 +6,29 @@ A dynamic flip View that accept adapter to populate it child Views like  a View 
 
 ## Usage
 
+
+#### XML Declearation
+declear dynamic FlipView from xml
+```xml
+<com.example.adaptablecurlpage.flipping.views.DynamicFlipView
+      android:id="@+id/dynamic_flip_view"
+      android:layout_width="match_parent"                   
+      android:layout_height="match_parent" 
+      app:flip_speed="very_slow"
+      app:shadow_type="normal"
+      app:page_type="magazine"
+      app:page_back_alpha="0.4"/>
+```
+#### Initialization
+Initialize the dynamic FlipView from xml in your Activity
+```JAVA
+dynamicFlipView= findViewById(R.id.dynamic_flip_view)
+```
+Initialize the dynamic FlipView directly in your Activity
+```JAVA
+  dynamicFlipView= new DynamicFlipView(context);
+```
+#### Data Binding
 To use a single layout for all pages
 #### Kotlin 
 ```kotlin
@@ -14,8 +37,8 @@ for (i in 1..15) {
 }
 dynamic_flip_view.setFlipSpeed(speed)
 dynamic_flip_view.loadSingleLayoutPages(R.layout.scroll_text_item, pagesData) { position, data
-         ->
-         tV.setText(data)
+   ->
+   tV.setText(data)
 }
 ```
 #### Java
@@ -24,13 +47,13 @@ for (int i = 1; i < 16; i++) {
    pages_data.add("Some text");
 }
 dynamicFlipView.loadSingleLayoutPages(R.layout.scroll_text_item, pages_data
-          , new DynamicFlipView.HandleSingleViewCallback<String>() {
-            @Override
-            public void HandleView(View v, int position, String data) {
-               final EditText tV = v.findViewById(R.id.tV);
-               tV.setText(data);
-            }
-         });
+    , new DynamicFlipView.HandleSingleViewCallback<String>() {
+      @Override
+      public void HandleView(View v, int position, String data) {
+         final EditText tV = v.findViewById(R.id.tV);
+         tV.setText(data);
+      }
+   });
 ```
 
 To use a different layout in pages
@@ -43,21 +66,22 @@ dataList.add(R.layout.item2 with mutableMapOf(R.id.tV to "Get Ready!!", R.id.img
 dataList.add(R.layout.scroll_text_item with mutableMapOf(R.id.tV to getRubbishText()))
 dataList.add(R.layout.item_simple with mutableMapOf(R.id.img to R.drawable.dance))
 dynamic_flip_view.loadMultiLayoutPages(dataList) { position, data, layout
-        ->
-         when (layout) {
-                R.layout.item1,
-                R.layout.item2 -> click()//only item1 & 2 has button to click
-                R.layout.item_simple,
-                R.layout.scroll_image_item -> {
-//                    TODO("Do anything specific " +
-//                            "from (item_simple to scroll_image_item")
-                }
-            }
-            //Handle anything common with all view
-            for (viewId in data.keys)
-                loadData(viewId)
+     ->
+      when (layout) {
+             R.layout.item1,
+             R.layout.item2 -> click()//only item1 & 2 has button to click
+             R.layout.item_simple,
+             R.layout.scroll_image_item -> {
+   //                    TODO("Do anything specific " +
+   //                            "from (item_simple to scroll_image_item")
+             }
+         }
+         //Handle anything common with all view
+         for (viewId in data.keys)
+             loadData(viewId)
 }
 ```
+
 ## Credit
 Eschao Page Flip
 
