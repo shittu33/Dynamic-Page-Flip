@@ -80,6 +80,113 @@ dynamic_flip_view.loadMultiLayoutPages(dataList) { position, data, layout
              loadData(viewId)
 }
 ```
+### Java
+
+```
+LinkedList<Pair<Integer, PageData>> list = new LinkedList<>();
+list.add(new Pair<>(R.layout.item1, new PageData(R.id.img, R.drawable.google_fun)));
+list.add(new Pair<>(R.layout.item_simple, new PageData(R.id.img, R.drawable.dance)));
+list.add(new Pair<>(R.layout.item2, new PageData(R.id.img, R.drawable.dance)));
+dynamicFlipView.loadMultiLayoutPages(list, new DynamicFlipView.HandleMultiViewCallback<PageData>() {
+@Override
+public void HandleView(View v, final int position, final PageData data, @LayoutRes int layout) {
+    final ImageView img = v.findViewById(data.id);
+    final Button btn = v.findViewById(R.id.btn);
+    switch (layout) {
+        case R.layout.item1:
+        case R.layout.item2:
+            final EditText tV = v.findViewById(R.id.tV);
+            tV.setText("Image");
+            btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String alertMsg = data.id + "of position" + position;
+                    tV.setText(alertMsg);
+                }
+            });
+        case R.layout.item_simple:
+            ViewUtils.loadImageWithGlide(data.result, img);
+    }
+}
+});
+```
+### Customization
+
+To load data in to DynamiFlipView like normal ListView or GridView, create an Adapter and attach it to the view
+
+```Java
+dynamicFlipView.setAdapter(adapter);
+```
+
+Change View parameters
+```Java
+dynamicFlipView.setFlipSpeed(FlipSpeed.NORMAL)
+    .setMaxBackAlpha(0.5f)
+    .setPageBackColor(Color.BLACK)
+    .setPageBackColorToDominant()
+    .setPageType(PageType.MAGAZINE_SHEET)
+    .setPageShadowType(PageShadowType.NO_SHADOW)
+```
+
+setUp Flip Listeners or callbacks
+
+```java
+dynamicFlipView.setFlipLister(new DynamicFlipView.OnPageFlippedListener() {
+@Override
+    public void onPageFlipped(View page, int page_no, long id) {
+        Log.e(TAG, "onPageFlipped: page no is " + page_no);
+    }
+
+    @Override
+    public void onPageFlippedBackward(View page, int page_no, long id) {
+        Log.e(TAG, "onPageFlippedBackward: page no is " + page_no);
+    }
+
+    @Override
+    public void onPageFlippedForward(View page, int page_no, long id) {
+        Log.e(TAG, "onPageFlippedForward: page no is " + page_no);
+    }
+
+    @Override
+    public void onFingerDown(View v, int pos) {
+        Log.e(TAG, "onFingerDown: on page " + pos);
+    }
+
+    @Override
+    public void onFingerUp(View v, int pos) {
+        Log.e(TAG, "onFingerUp: on page " + pos);
+    }
+
+    @Override
+    public void onFingerDownToFlip(View page, int page_no) {
+        Log.e(TAG, "onFingerDownToFlip: on page " + page_no);
+    }
+
+    @Override
+    public void onFingerUpToFlip(View page, int page_no) {
+        Log.e(TAG, "onFingerUpToFlip: on page " + page_no);
+    }
+
+    @Override
+    public void onFastFlipStart(View page, int page_no, boolean is_forward) {
+        Log.e(TAG, "onFastFlipStart: page no is " + page_no);
+    }
+
+    @Override
+    public void onFastFlipEnd(View page, int page_no, boolean is_forward) {
+        Log.e(TAG, "onFastFlipEnd: page no is " + page_no);
+    }                    
+})
+```
+#### Gestures
+
+##### Click to Flip
+Instead of dragging your finger accross the page to flip, sometimes its nice to just click on the right edge of the page to flip forward and left edge of the page to flip backward(like that in whatsApp/Facebook statuses) 
+##### Fast Flip
+Instead of just a click on the edges, sometimes you just want to hold your hand on those edges to flip fast forward and backward the pages.
+
+DynamicFlipView support this two type of gestures!!!
+
 
 ## Credit
 Eschao Page Flip
