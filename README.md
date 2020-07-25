@@ -35,7 +35,6 @@ To use a single layout for all pages
 for (i in 1..15) {
    pagesData.add("This is Page $i")
 }
-dynamic_flip_view.setFlipSpeed(speed)
 dynamic_flip_view.loadSingleLayoutPages(R.layout.scroll_text_item, pagesData) { position, data
    ->
    tV.setText(data)
