@@ -6,7 +6,6 @@ A dynamic flip View that accept adapter to populate it child Views like  a View 
 
 ## Usage
 
-
 #### XML Declearation
 declear dynamic FlipView from xml
 ```xml
@@ -28,8 +27,12 @@ Initialize the dynamic FlipView directly in your Activity
 ```JAVA
   dynamicFlipView= new DynamicFlipView(context);
 ```
-#### Data Binding
-To use a single layout for all pages
+## Data Binding
+
+### Homogenous Pages
+
+To use a single layout in pages
+
 #### Kotlin 
 ```kotlin
 for (i in 1..15) {
@@ -54,6 +57,7 @@ dynamicFlipView.loadSingleLayoutPages(R.layout.scroll_text_item, pages_data
       }
    });
 ```
+### Heterogenous Pages
 
 To use a different layout in pages
 #### Kotlin 
