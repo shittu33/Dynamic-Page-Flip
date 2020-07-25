@@ -2,7 +2,8 @@
 A dynamic flip View that accept adapter to populate it child Views like  a View Pager
 
 ## DEMO
-![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/single.gif?raw=true)![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/multi.gif?raw=true)![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/speed.gif?raw=true)
+![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/single.gif?raw=true)![alt text]
+(https://github.com/shittu33/Dynamic-Page-Flip/blob/master/multi.gif?raw=true)![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/speed.gif?raw=true)
 
 ## Usage
 
