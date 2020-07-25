@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="DynamicFlipView">
+        <attr name="page_back_color" format="color" />
+        <attr name="page_type" format="enum">
+            <enum name="soft" value="0" />
+            <enum name="magazine" value="1" />
+            <enum name="hard" value="2" />
+        </attr>
+        <attr name="shadow_type" format="enum">
+            <enum name="none" value="0" />
+            <enum name="normal" value="1" />
+            <enum name="deep" value="2" />
+        </attr>
+        <attr name="flip_speed" format="enum">
+            <enum name="very_slow" value="0" />
+            <enum name="slow" value="1" />
+            <enum name="normal" value="2" />
+            <enum name="fast" value="3" />
+            <enum name="very_fast" value="4" />
+        </attr>
+        // page_back_alpha value is between 0...1
+        <attr name="page_back_alpha" format="float"/>
+        <attr name="opaque_page_back" format="boolean"/>
+    </declare-styleable>
+    <!--<declare-styleable name="DrawableTextView">-->
+    <!--<attr name="text_drawable" format="reference" />-->
+    <!--<attr name="textDrawableColor" format="color" />-->
+    <!--<attr name="text_color" format="color" />-->
+    <!--<attr name="text" format="string" />-->
+    <!--</declare-styleable>-->
+</resources>

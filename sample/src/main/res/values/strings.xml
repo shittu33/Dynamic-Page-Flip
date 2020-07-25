@@ -1,7 +1,9 @@
 <resources>
     <string name="app_name">sample</string>
     <string name="btn_click_signal_msg">Btn clicked</string>
-    <string name="single_adapter_txt">Single Pages Activity</string>
-    <string name="multi_page_activity">Multi page Activity</string>
+    <string name="single_adapter_txt">Single Pages Demo</string>
+    <string name="multi_page_activity">Multi page Demo</string>
     <string name="click_me">Click me</string>
+    <string name="fast_flip_demo">Fast Flip Demo</string>
+    <string name="very_slow_demo">VERY SLOW DEMO</string>
 </resources>

@@ -32,7 +32,9 @@ class MultiLayoutActivity : AppCompatActivity() {
             else
                 dataList.add(layout with getMap4())
         }
-//        dynamic_flip_view.setFlipSpeed(FlipSpeed.VERY_FAST)
+        val speed: FlipSpeed = (intent.getSerializableExtra("speed")
+                ?: FlipSpeed.NORMAL) as FlipSpeed
+        dynamic_flip_view.setFlipSpeed(speed)
         dynamic_flip_view.loadMultiLayoutPages(dataList) { position, data, layout
             ->
             fun click() {

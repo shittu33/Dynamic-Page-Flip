@@ -5,14 +5,13 @@
 <!--        <attr name="left_page_background" format="reference" />-->
 <!--        <attr name="page_uniform_gap" format="dimension" />-->
 <!--        <enum name="exit_bucket" value="7" />-->
+
     </declare-styleable>
+
     <declare-styleable name="DrawableTextView">
         <attr name="text_drawable" format="reference" />
         <attr name="textDrawableColor" format="color" />
         <attr name="text_color" format="color" />
         <attr name="text" format="string" />
-<!--        <attr name="left_page_background" format="reference" />-->
-<!--        <attr name="page_uniform_gap" format="dimension" />-->
-<!--        <enum name="exit_bucket" value="7" />-->
     </declare-styleable>
 </resources>

@@ -560,8 +560,8 @@ public class Page {
      *
      * @param b Bitmap object for creating texture
      */
-static int FoldPageBackColor = Color.DKGRAY;
-static boolean UseDominantColorForFoldBack = true;
+private static int FoldPageBackColor = Color.DKGRAY;
+private static boolean UseDominantColorForFoldBack = true;
 
     public static void UseDominantColorForFoldBack(boolean useDominantColorForFoldBack) {
         UseDominantColorForFoldBack = useDominantColorForFoldBack;

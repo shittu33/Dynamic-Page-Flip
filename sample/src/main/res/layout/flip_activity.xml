@@ -10,6 +10,10 @@
     <com.example.adaptablecurlpage.flipping.views.DynamicFlipView
         android:id="@+id/dynamic_flip_view"
         android:layout_width="match_parent"
+        app:flip_speed="very_slow"
+        app:shadow_type="normal"
+        app:page_type="magazine"
+        app:page_back_alpha="0.4"
         android:layout_height="match_parent" />
 
 </RelativeLayout>

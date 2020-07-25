@@ -4,6 +4,17 @@
     android:layout_height="match_parent"
     android:gravity="center"
     android:orientation="vertical">
+
+    <Button
+        android:text="@string/fast_flip_demo"
+        android:layout_width="wrap_content"
+        android:onClick="onFastFlip"
+        android:layout_height="wrap_content"/>
+    <Button
+        android:text="@string/very_slow_demo"
+        android:layout_width="wrap_content"
+        android:onClick="onSlowFlip"
+        android:layout_height="wrap_content"/>
     <Button
         android:text="@string/multi_page_activity"
         android:layout_width="wrap_content"

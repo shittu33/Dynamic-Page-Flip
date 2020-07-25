@@ -2,6 +2,7 @@ package com.example.adaptablecurlpage.flipping.views;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.database.DataSetObserver;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -23,11 +24,11 @@ import android.widget.AdapterView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.LayoutRes;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.eschao.android.widget.pageflip.Page;
 import com.eschao.android.widget.pageflip.PageFlip;
+import com.example.adaptablecurlpage.R;
 import com.example.adaptablecurlpage.flipping.adapter.MultiAdapter;
 import com.example.adaptablecurlpage.flipping.adapter.SingleAdapter;
 import com.example.adaptablecurlpage.flipping.utils.BitmapLoader;
@@ -45,6 +46,8 @@ import java.util.List;
 import kotlin.Pair;
 import kotlin.jvm.functions.Function4;
 
+import static android.graphics.Color.DKGRAY;
+
 /**
  * Created by Abu Muhsin on 21/11/2018.
  */
@@ -54,6 +57,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     public static final String TAG = "AdapterPageFlipView";
     public static final float CLICK_FORWARD_SLOP = 1.087613F;
     public static final float CLICK_BACK_SLOP = 12.416F;
+    public static final float TRANS_BACK_ALPHA = 0.2f;
 
     //For Views
     private Context context;
@@ -84,20 +88,86 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     };
     //----------------------------Constructors----------------------------------------------------
 
-    public DynamicFlipView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        this.attrs = attrs;
-        includePageFlipView(context);
-        this.context = context;
-
-    }
-
     public DynamicFlipView(Context context) {
         super(context);
         this.context = context;
         includePageFlipView(context);
     }
-    //----------------------------View Adapter Methods--------------------------------------------
+
+    public DynamicFlipView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        this.attrs = attrs;
+        includePageFlipView(context);
+        this.context = context;
+        HandleXmlAccessibility(context, attrs);
+    }
+
+    public DynamicFlipView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+        this.context = context;
+        HandleXmlAccessibility(context, attrs);
+    }
+
+    public void HandleXmlAccessibility(Context context, AttributeSet attrs) {
+        if (attrs != null) {
+            TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.DynamicFlipView);
+            int backColor = a.getColor(R.styleable.DynamicFlipView_page_back_color
+                    , DKGRAY);
+            if (backColor != DKGRAY)
+                setPageBackColor(backColor);
+            int page_sheet = a.getInt(R.styleable.DynamicFlipView_shadow_type, 1);
+            switch (page_sheet) {
+                case 0:
+                    setPageType(PageType.SOFT_SHEET);
+                    break;
+                case 1:
+                    setPageType(PageType.MAGAZINE_SHEET);
+                    break;
+                case 2:
+                    setPageType(PageType.HARD_SHEET);
+                    break;
+            }
+            int shadow_type = a.getInt(R.styleable.DynamicFlipView_shadow_type, 1);
+            switch (shadow_type) {
+                case 0:
+                    setPageShadowType(PageShadowType.NO_SHADOW);
+                    break;
+                case 1:
+                    setPageShadowType(PageShadowType.NORMAL_SHADOW);
+                    break;
+                case 2:
+                    setPageShadowType(PageShadowType.DEEP_SHADOW);
+                    break;
+            }
+            int flip_speed = a.getInt(R.styleable.DynamicFlipView_flip_speed, 2);
+            switch (flip_speed) {
+                case 0:
+                    setFlipSpeed(FlipSpeed.VERY_SLOW);
+                    break;
+                case 1:
+                    setFlipSpeed(FlipSpeed.SLOW);
+                    break;
+                case 2:
+                    setFlipSpeed(FlipSpeed.NORMAL);
+                    break;
+                case 3:
+                    setFlipSpeed(FlipSpeed.FAST);
+                    break;
+                case 4:
+                    setFlipSpeed(FlipSpeed.VERY_FAST);
+                    break;
+            }
+            float back_alpha = a.getFloat(R.styleable.DynamicFlipView_page_back_alpha, TRANS_BACK_ALPHA);
+            boolean opaque_back_page = a.getBoolean(R.styleable.DynamicFlipView_opaque_page_back, false);
+            if (opaque_back_page)
+                setMaxBackAlpha(1);
+            else
+                setMaxBackAlpha(back_alpha);
+            a.recycle();
+        } else {
+            setPageShadowType(PageShadowType.NORMAL_SHADOW);
+        }
+    }
 
     @Override
     public void setAdapter(Adapter adapter) {
@@ -233,12 +303,14 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         return (bufferSize > 0 && bufferIndex < bufferSize && bufferIndex >= 0) ? bufferedViews.get(bufferIndex)
                 : null;
     }
+
     public View getNextView() {
         final int bufferSize = bufferedViews.size();
         final int nextIndex = bufferIndex + 1;
         return (nextIndex < bufferSize) ? bufferedViews.get(nextIndex)
                 : null;
     }
+
     public View getPreviousView() {
         final int bufferSize = bufferedViews.size();
         final int prevIndex = bufferIndex - 1;
@@ -405,7 +477,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
     }
 
     public DynamicFlipView setMaxBackAlpha(float alpha) {
-        Page.UseDominantColorForFoldBack(true);
+//        Page.UseDominantColorForFoldBack(true);
         mPageFlipView.setMaxBackAlpha(alpha);
         return this;
     }
@@ -557,7 +629,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
             if (last_index < adapterIndex) {
                 //Forward
                 if (onPageFlippedListener != null) {
-                    is_moving_fwd=true;
+                    is_moving_fwd = true;
                     onPageFlippedListener.onPageFlippedForward(
                             bufferedViews.get(bufferIndex)
                             , adapterIndex
@@ -565,7 +637,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
                 }
             } else if (last_index > adapterIndex) {
                 if (onPageFlippedListener != null) {
-                    is_moving_fwd=false;
+                    is_moving_fwd = false;
                     onPageFlippedListener.onPageFlippedBackward(
                             bufferedViews.get(bufferIndex)
                             , adapterIndex
@@ -744,7 +816,8 @@ public class DynamicFlipView extends AdapterView<Adapter> {
             reloadAnimationPage();
         } else if (action == MotionEvent.ACTION_DOWN) {
             reloadAnimationPage();
-        }            mHandler.postDelayed(mLChildDownRun, 10);
+        }
+        mHandler.postDelayed(mLChildDownRun, 10);
 
         return super.dispatchTouchEvent(ev);
     }
@@ -1218,14 +1291,6 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         void onFastFlipEnd(View page, int page_no, boolean is_forward);
 
     }
-
-
-    public boolean is_from_refresh;
-
-    // First attempts to refresh pages...........................................
-
-
-//    ........................................................................
 
 
     public DrawingState getmDrawingState() {
