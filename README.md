@@ -182,7 +182,7 @@ dynamicFlipView.setFlipLister(new DynamicFlipView.OnPageFlippedListener() {
     }                    
 })
 ```
-#### Gestures
+### Gestures
 
 ##### Click to Flip
 Instead of dragging your finger accross the page to flip, sometimes its nice to just click on the right edge of the page to flip forward and left edge of the page to flip backward(like that in whatsApp/Facebook statuses) 
