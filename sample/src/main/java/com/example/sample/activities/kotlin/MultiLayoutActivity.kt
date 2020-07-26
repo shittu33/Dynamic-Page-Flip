@@ -26,7 +26,7 @@ class MultiLayoutActivity : AppCompatActivity() {
         dataList.add(R.layout.scroll_text_item with mutableMapOf(R.id.tV to getRubbishText()))
         dataList.add(R.layout.item_simple with mutableMapOf(R.id.img to R.drawable.dance))
         for (i in 0..20) {
-            val layout = ListOfLayouts().random()
+            val layout = listOfLayouts().random()
             if (layout == R.layout.horizontal_image_item)
                 dataList.add(layout with getMap5())
             else
@@ -42,7 +42,6 @@ class MultiLayoutActivity : AppCompatActivity() {
                     Toast.makeText(context, "Page of position $position", LENGTH_SHORT).show();
                 }
             }
-
             //Function to populate text and images using the ids from the list
             fun loadData(viewId: Int) {
                 val view: View = findViewById(viewId) ?: return
@@ -86,7 +85,7 @@ class MultiLayoutActivity : AppCompatActivity() {
             , R.drawable.double_face, R.drawable.quote2
             , R.drawable.quote3, R.drawable.quote4)
 
-    private fun ListOfLayouts() = listOf(
+    private fun listOfLayouts() = listOf(
             R.layout.grid_item
             , R.layout.horizontal_image_item
             , R.layout.scroll_image_item)

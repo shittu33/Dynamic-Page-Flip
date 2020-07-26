@@ -32,18 +32,14 @@ public class SingleLayoutActivity extends AppCompatActivity {
             }
             pages_data.add(large_txt.toString());
         }
-//        dynamicFlipView.setFlipSpeed(FlipSpeed.NORMAL)
-//                .setPageBackColorToDominant()
-//                .setPageType(PageType.MAGAZINE_SHEET)
-//                .setPageShadowType(PageShadowType.NO_SHADOW)
         dynamicFlipView.loadSingleLayoutPages(R.layout.scroll_text_item, pages_data
-                        , new DynamicFlipView.HandleSingleViewCallback<String>() {
-                            @Override
-                            public void HandleView(View v, int position, String data) {
-                                final EditText tV = v.findViewById(R.id.tV);
-                                tV.setText(data);
-                            }
-                        });
+                , new DynamicFlipView.HandleSingleViewCallback<String>() {
+                    @Override
+                    public void HandleView(View v, int position, String data) {
+                        final EditText tV = v.findViewById(R.id.tV);
+                        tV.setText(data);
+                    }
+                });
     }
 
 }

@@ -199,7 +199,7 @@ public class DynamicFlipView extends AdapterView<Adapter> {
         }
     }
 
-    public <T> void loadSingleLayoutPages(@LayoutRes final int layoutResources, LinkedList<T> data, final HandleSingleViewCallback<T> listener) {
+    public <T> void loadSingleLayoutPages(@LayoutRes final int layoutResources, List<T> data, final HandleSingleViewCallback<T> listener) {
         final SingleAdapter<T> adapter = new SingleAdapter<>(data, new Function4<SingleAdapter<T>, Integer, View, ViewGroup, View>() {
             @Override
             public View invoke(SingleAdapter<T> adapter, Integer position, View convertView, ViewGroup parent) {

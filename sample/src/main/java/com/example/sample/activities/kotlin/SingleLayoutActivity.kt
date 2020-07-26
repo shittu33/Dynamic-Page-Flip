@@ -21,7 +21,8 @@ class SingleLayoutActivity : AppCompatActivity() {
             }
             pagesData.add(largeTxt.toString())
         }
-        val speed: FlipSpeed = (intent.getSerializableExtra("speed")  ?: FlipSpeed.NORMAL) as FlipSpeed
+        val speed: FlipSpeed = (intent.getSerializableExtra("speed")
+                ?: FlipSpeed.NORMAL) as FlipSpeed
         dynamic_flip_view.setFlipSpeed(speed)
         dynamic_flip_view.loadSingleLayoutPages(R.layout.scroll_text_item, pagesData) { position, data
             ->
