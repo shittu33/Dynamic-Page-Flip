@@ -4,6 +4,26 @@ A dynamic flip View that accept adapter to populate it child Views like  a View 
 # DEMO
 ![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/single.gif?raw=true)![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/multi.gif?raw=true)![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/speed.gif?raw=true)
 
+# Installation [![](https://jitpack.io/v/shittu33/Dynamic-Page-Flip.svg)](https://jitpack.io/#shittu33/Dynamic-Page-Flip)
+
+Add this to your project's build.gradle
+```
+allprojects {
+      repositories {
+            ...
+            maven { url 'https://jitpack.io' }
+      }
+}
+```
+
+And add this to your module's build.gradle
+
+```
+dependencies {
+     implementation 'com.github.shittu33:Dynamic-Page-Flip:v1.0'
+}
+```
+
 # Usage
 
 ## XML Declearation
@@ -84,7 +104,7 @@ dynamic_flip_view.loadMultiLayoutPages(dataList) { position, data, layout
              loadData(viewId)
 }
 ```
-### Java
+#### Java
 
 ```
 LinkedList<Pair<Integer, PageData>> list = new LinkedList<>();
