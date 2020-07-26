@@ -1,12 +1,12 @@
 # Dynamic-Page-Flip
 A dynamic flip View that accept adapter to populate it child Views like  a View Pager
 
-## DEMO
+# DEMO
 ![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/single.gif?raw=true)![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/multi.gif?raw=true)![alt text](https://github.com/shittu33/Dynamic-Page-Flip/blob/master/speed.gif?raw=true)
 
-## Usage
+# Usage
 
-#### XML Declearation
+## XML Declearation
 declear dynamic FlipView from xml
 ```xml
 <com.example.adaptablecurlpage.flipping.views.DynamicFlipView
@@ -18,7 +18,7 @@ declear dynamic FlipView from xml
       app:page_type="magazine"
       app:page_back_alpha="0.4"/>
 ```
-#### Initialization
+## Initialization
 Initialize the dynamic FlipView from xml in your Activity
 ```JAVA
 dynamicFlipView= findViewById(R.id.dynamic_flip_view)
